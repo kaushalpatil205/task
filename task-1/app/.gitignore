@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# Test coverage output
+coverage/
+
+# Environment files
+.env
+.env.*
+
+# OS junk
+.DS_Store
+Thumbs.db
