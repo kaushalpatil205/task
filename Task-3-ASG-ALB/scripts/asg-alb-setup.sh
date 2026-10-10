@@ -1,22 +1,35 @@
 #!/bin/bash
 # ASG + ALB setup with CPU-based auto-scaling
-# Run: bash asg-alb-setup.sh
-# Requirements: AWS CLI configured, existing VPC with public subnets
+# Run: bash scripts/asg-alb-setup.sh
 
 set -e
 
 REGION="ap-south-1"
-AMI_ID="ami-0f58b397bc5c1f2e8"       # Amazon Linux 2023 in ap-south-1
-INSTANCE_TYPE="t2.micro"
-KEY_NAME="your-key-pair"              # replace with your key pair name
-VPC_ID="vpc-xxxxxxxxx"               # replace with your VPC ID
-SUBNET_1="subnet-aaaaaaaa"           # replace with subnet 1 (AZ-a)
-SUBNET_2="subnet-bbbbbbbb"           # replace with subnet 2 (AZ-b)
+# Amazon Linux 2023 in ap-south-1
+AMI_ID="ami-053b12d3152c0ce71" 
+INSTANCE_TYPE="t3.micro"
+SUFFIX=$(date +%s)
+
+echo "==> Fetching Default VPC and Subnets..."
+VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)
+
+if [ "$VPC_ID" == "None" ] || [ -z "$VPC_ID" ]; then
+    echo "Error: No default VPC found. Please specify a VPC manually."
+    exit 1
+fi
+
+SUBNETS=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC_ID --query 'Subnets[0:2].SubnetId' --output text)
+SUBNET_1=$(echo $SUBNETS | awk '{print $1}')
+SUBNET_2=$(echo $SUBNETS | awk '{print $2}')
+
+echo "    VPC ID  : $VPC_ID"
+echo "    Subnet 1: $SUBNET_1"
+echo "    Subnet 2: $SUBNET_2"
 
 # ---- Security Groups ----
 echo "==> Creating security group for ALB"
 ALB_SG=$(aws ec2 create-security-group \
-  --group-name "alb-sg" \
+  --group-name "alb-sg-$SUFFIX" \
   --description "Allow HTTP from internet" \
   --vpc-id "$VPC_ID" \
   --query 'GroupId' --output text)
@@ -27,7 +40,7 @@ aws ec2 authorize-security-group-ingress \
 
 echo "==> Creating security group for EC2 instances"
 EC2_SG=$(aws ec2 create-security-group \
-  --group-name "ec2-asg-sg" \
+  --group-name "ec2-asg-sg-$SUFFIX" \
   --description "Allow HTTP only from ALB" \
   --vpc-id "$VPC_ID" \
   --query 'GroupId' --output text)
@@ -40,24 +53,25 @@ aws ec2 authorize-security-group-ingress \
 # ---- Launch Template ----
 echo "==> Creating Launch Template"
 
-USER_DATA=$(base64 <<'EOF'
+USER_DATA=$(base64 <<'USERDATAEOF'
 #!/bin/bash
 yum update -y
-yum install -y httpd
+yum install -y httpd stress
 systemctl start httpd
 systemctl enable httpd
-# simple health-check page
-echo "<h1>Instance: $(hostname -f)</h1>" > /var/www/html/index.html
-EOF
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+echo "<h1>Highly Available Web Cluster</h1><p>Served from Instance: <b>$INSTANCE_ID</b></p><p>Availability Zone: <b>$AZ</b></p>" > /var/www/html/index.html
+USERDATAEOF
 )
 
 LT_ID=$(aws ec2 create-launch-template \
-  --launch-template-name "product-api-lt" \
+  --launch-template-name "product-api-lt-$SUFFIX" \
   --version-description "v1" \
   --launch-template-data "{
     \"ImageId\": \"$AMI_ID\",
     \"InstanceType\": \"$INSTANCE_TYPE\",
-    \"KeyName\": \"$KEY_NAME\",
     \"SecurityGroupIds\": [\"$EC2_SG\"],
     \"UserData\": \"$USER_DATA\",
     \"TagSpecifications\": [{
@@ -70,7 +84,7 @@ LT_ID=$(aws ec2 create-launch-template \
 echo "    Launch Template ID: $LT_ID"
 
 # ---- Application Load Balancer ----
-echo "==> Creating ALB"
+echo "==> Creating Application Load Balancer (ALB)"
 ALB_ARN=$(aws elbv2 create-load-balancer \
   --name "product-api-alb" \
   --subnets "$SUBNET_1" "$SUBNET_2" \
@@ -101,10 +115,10 @@ aws elbv2 create-listener \
   --load-balancer-arn "$ALB_ARN" \
   --protocol HTTP \
   --port 80 \
-  --default-actions Type=forward,TargetGroupArn="$TG_ARN"
+  --default-actions Type=forward,TargetGroupArn="$TG_ARN" > /dev/null
 
 # ---- Auto Scaling Group ----
-echo "==> Creating Auto Scaling Group"
+echo "==> Creating Auto Scaling Group (ASG)"
 aws autoscaling create-auto-scaling-group \
   --auto-scaling-group-name "product-api-asg" \
   --launch-template "LaunchTemplateId=$LT_ID,Version=\$Latest" \
@@ -117,8 +131,8 @@ aws autoscaling create-auto-scaling-group \
   --health-check-grace-period 60 \
   --tags Key=Name,Value=product-api-asg,PropagateAtLaunch=true
 
-# ---- Scaling Policy: CPU > 70% → scale out ----
-echo "==> Creating CPU-based scaling policy"
+# ---- Scaling Policy: CPU > 70% ----
+echo "==> Creating CPU-based Target Tracking scaling policy (> 70%)"
 POLICY_ARN=$(aws autoscaling put-scaling-policy \
   --auto-scaling-group-name "product-api-asg" \
   --policy-name "scale-out-cpu-70" \
@@ -135,17 +149,22 @@ POLICY_ARN=$(aws autoscaling put-scaling-policy \
 
 echo "    Policy ARN: $POLICY_ARN"
 
+echo "==> Waiting for ALB to become active (takes about 2 minutes)..."
+aws elbv2 wait load-balancer-available --load-balancer-arns "$ALB_ARN"
+
 ALB_DNS=$(aws elbv2 describe-load-balancers \
   --load-balancer-arns "$ALB_ARN" \
   --query 'LoadBalancers[0].DNSName' --output text)
 
 echo ""
-echo "Done!"
-echo "  ALB DNS: http://$ALB_DNS"
-echo "  ASG    : product-api-asg (min=1, max=4, desired=2)"
-echo "  Policy : scale when avg CPU > 70%"
+echo "========================================="
+echo "✅ Setup Complete!"
+echo "========================================="
+echo "  ALB DNS : http://$ALB_DNS"
+echo "  ASG     : product-api-asg (min=1, max=4, desired=2)"
+echo "  Policy  : Scale out when avg CPU > 70%"
 echo ""
-echo "To test unhealthy instance replacement:"
-echo "  1. Terminate any running instance manually"
-echo "  2. Watch ASG automatically launch a replacement"
-echo "  aws autoscaling describe-scaling-activities --auto-scaling-group-name product-api-asg"
+echo "To test high availability and unhealthy replacement:"
+echo "  1. Open the EC2 Console"
+echo "  2. Terminate any running instance named 'product-api-instance'"
+echo "  3. Watch the ASG automatically detect it as unhealthy and launch a replacement!"
