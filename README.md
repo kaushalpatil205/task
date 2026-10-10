@@ -15,8 +15,8 @@ Each task is self-contained within its own directory, containing all associated 
 | Task | Primary Objective | Code / Manifests Path | Detailed Guide | Proof of Submission |
 |---|---|---|---|---|
 | **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`ci-cd/`](ci-cd/) | [`ci-cd/README.md`](ci-cd/README.md) | [`ci-cd/screenshots/`](ci-cd/screenshots/) |
-| **Task 2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`task-2/`](task-2/) | [`task-2/README.md`](task-2/README.md) | [`task-2/screenshots/`](task-2/screenshots/) |
-| **Task 3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`task-3/`](task-3/) | [`task-3/README.md`](task-3/README.md) | [`task-3/screenshots/`](task-3/screenshots/) |
+| **Task 2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`cloudfront/`](cloudfront/) | [`cloudfront/README.md`](cloudfront/README.md) | [`cloudfront/screenshots/`](cloudfront/screenshots/) |
+| **Task 3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`asg-alb/`](asg-alb/) | [`asg-alb/README.md`](asg-alb/README.md) | [`asg-alb/screenshots/`](asg-alb/screenshots/) |
 
 ---
 
@@ -40,7 +40,7 @@ task/
 │   │   └── service.yaml
 │   └── screenshots/              # CI/CD proof captures (cicd-01 to cicd-06)
 │
-├── task-2/                       # Task 2: CloudFront + S3 Static Website
+├── cloudfront/                       # Task 2: CloudFront + S3 Static Website
 │   ├── README.md                 # In-depth Task 2 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   └── cloudfront-setup.sh   # Bash automation script (S3, OAC, Distribution, Policy)
@@ -49,7 +49,7 @@ task/
 │   │   └── s3-oac-policy.json    # Bucket policy enforcing CloudFront OAC access
 │   └── screenshots/              # Task 2 proof captures (cf-01 to cf-07)
 │
-├── task-3/                       # Task 3: ASG + ALB + Auto Scaling
+├── asg-alb/                       # Task 3: ASG + ALB + Auto Scaling
 │   ├── README.md                 # In-depth Task 3 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   ├── asg-alb-setup.sh      # Bash automation script (VPC, ALB, TG, ASG, Policy)
@@ -76,7 +76,7 @@ task/
 
 ---
 
-### [Task 2: CloudFront + S3 Static Website](task-2/README.md)
+### [Task 2: CloudFront + S3 Static Website](cloudfront/README.md)
 - **Goal**: Host a static web portal on Amazon S3 with global CDN caching and strict access control.
 - **Security & Delivery Highlights**:
   1. **S3 Hardening**: All 4 Block Public Access toggles are permanently enabled.
@@ -84,11 +84,11 @@ task/
   3. **Direct S3 Restriction**: Direct HTTP/S attempts to the S3 bucket endpoint return `403 Access Denied`.
   4. **Custom 404 Routing**: S3 missing keys route through CloudFront to custom `error.html`.
   5. **Cache Invalidation**: On asset deployment, invalidation requests (`/*`) clear edge caches globally.
-- **Full Guide**: Refer to [`task-2/README.md`](task-2/README.md).
+- **Full Guide**: Refer to [`cloudfront/README.md`](cloudfront/README.md).
 
 ---
 
-### [Task 3: ASG + ALB with Dynamic CPU Scaling](task-3/README.md)
+### [Task 3: ASG + ALB with Dynamic CPU Scaling](asg-alb/README.md)
 - **Goal**: Provision a highly-available, self-healing web server fleet across multiple Availability Zones.
 - **Architecture Highlights**:
   1. **Security Isolation**: Internet traffic only enters the Application Load Balancer (ALB SG); EC2 web servers only accept traffic from the ALB SG.
@@ -96,7 +96,7 @@ task/
   3. **Target Group & ALB**: Distributes traffic across subnets and runs continuous HTTP health checks on `/`.
   4. **CPU Auto Scaling**: CloudWatch Target Tracking scaling policy monitors `ASGAverageCPUUtilization` and dynamically adds instances when average CPU utilization exceeds **70%**.
   5. **Self-Healing Replacement**: Automatically detects terminated or unhealthy instances via ELB health checks and launches replacements to maintain the desired capacity of 2 nodes.
-- **Full Guide**: Refer to [`task-3/README.md`](task-3/README.md).
+- **Full Guide**: Refer to [`asg-alb/README.md`](asg-alb/README.md).
 
 ---
 
@@ -112,7 +112,7 @@ For submission, each task folder contains an isolated `screenshots/` directory. 
 - `cicd-05-k8s-deploy.png`: Terminal output of `kubectl get pods -n production` showing healthy running pods.
 - `cicd-06-rollout-done.png`: GitHub Actions deploy job output showing rollout successfully completed.
 
-### Task 2 Screenshots ([`task-2/screenshots/`](task-2/screenshots/))
+### Task 2 Screenshots ([`cloudfront/screenshots/`](cloudfront/screenshots/))
 - `cf-01-bucket-created.png`: S3 bucket showing all 4 Public Access Block settings enabled.
 - `cf-02-files-uploaded.png`: S3 console objects tab showing `index.html` and `error.html`.
 - `cf-03-bucket-policy.png`: S3 permissions tab showing OAC bucket policy attached.
@@ -121,7 +121,7 @@ For submission, each task folder contains an isolated `screenshots/` directory. 
 - `cf-06-direct-s3-blocked.png`: Web browser or curl showing `403 Forbidden` when attempting direct S3 access.
 - `cf-07-cache-invalidation.png`: AWS CLI or console showing completed cache invalidation.
 
-### Task 3 Screenshots ([`task-3/screenshots/`](task-3/screenshots/))
+### Task 3 Screenshots ([`asg-alb/screenshots/`](asg-alb/screenshots/))
 - `asg-01-launch-template.png`: EC2 Launch Template console showing `product-api-lt`.
 - `asg-02-asg-created.png`: Auto Scaling Group console showing `product-api-asg` with desired=2.
 - `asg-03-alb-created.png`: Load Balancers console showing `product-api-alb` in `Active` status.
