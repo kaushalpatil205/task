@@ -32,9 +32,14 @@ task-1/
 ```
 
 ## 🔐 Security & Authentication Architecture
-This pipeline was designed to use **OpenID Connect (OIDC)** as the authentication mechanism between GitHub Actions and AWS, which eliminates the need for long-lived IAM access keys. 
+This repository contains a **Dual-Pipeline Setup** to demonstrate both industry best practices and environment-specific pragmatic fallbacks.
 
-*Note: During execution, the host AWS environment utilized AWS SSO (Identity Center), which enforced Service Control Policies (SCPs) preventing external `sts:AssumeRoleWithWebIdentity` federation. Therefore, a fallback IAM User (`github-actions-deployer`) with standard access keys was used to execute the pipeline. The exact commands for both the ideal OIDC setup and the practical IAM fallback are documented below.*
+You will find two distinct workflow files in the `.github/workflows/` directory:
+
+1.  **`ci-cd-oidc.yml` (The Ideal Standard):** This pipeline is engineered to use **OpenID Connect (OIDC)** as the authentication mechanism between GitHub Actions and AWS. This is the credential-less industry standard, eliminating the need for long-lived IAM keys. The exact infrastructure commands and IAM trust policies required to provision this are preserved in `task-1/iam/github-oidc-trust-policy.json`.
+2.  **`ci-cd.yml` (The Active Fallback):** During execution, the host AWS environment utilized AWS SSO (Identity Center), which enforced Service Control Policies (SCPs) actively preventing external `sts:AssumeRoleWithWebIdentity` federation. Therefore, this active pipeline utilizes a dedicated IAM User (`github-actions-deployer`) with standard long-lived access keys as a necessary fallback to bypass the SSO restriction.
+
+*The exact execution logs for provisioning both architectures are documented below.*
 
 ---
 
