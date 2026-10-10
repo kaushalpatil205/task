@@ -162,3 +162,14 @@ In a standard, unrestricted AWS production environment, this pipeline is designe
 }
 ```
 *The infrastructure code and IAM configurations for this exact OIDC implementation are preserved in the `task-1/iam/` directory for review.*
+
+---
+
+## 🏗️ Task 1 Overview: Node.js Microservice
+
+The application deployed in Task 1 is a Node.js/Express backend REST API. It acts as a headless data provider, exposing a `GET /api/products` JSON endpoint. 
+
+The `task-1/` directory is structured as follows:
+*   `app/`: Contains the Node.js API code, Jest unit tests, and the multi-stage `Dockerfile`.
+*   `k8s/`: Contains the Kubernetes manifests (`deployment.yaml` and `service.yaml`) used to provision the pods and AWS LoadBalancer.
+*   `iam/`: Contains the security policies, specifically the OIDC Federation Trust Policy.

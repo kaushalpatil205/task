@@ -1,7 +1,32 @@
 # Task 1: Microservice CI/CD Pipeline to Amazon EKS
 
-## 📖 Overview
-This task demonstrates a complete Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions. It builds a Node.js microservice Docker image, scans it for vulnerabilities using Trivy, pushes it to Amazon ECR, and deploys it to an Amazon EKS (Kubernetes) cluster.
+## 📖 Microservice Overview
+The application deployed in this task is a lightweight, backend **RESTful API Microservice** built using Node.js and Express. 
+
+Its primary characteristics include:
+*   **Endpoints:** It exposes a `GET /health` endpoint (used by Kubernetes for liveness and readiness probes) and a `GET /api/products` endpoint serving mock JSON product data.
+*   **Testing:** It is fully unit-tested using `Jest` and `Supertest` to ensure API reliability before deployment.
+*   **Containerization:** The application is packaged using a multi-stage `Dockerfile` optimized for production, ensuring a minimal attack surface and small image size.
+
+## 📂 Project File Structure
+The `task-1/` directory is organized into modular components separating application code, Kubernetes configurations, and IAM policies:
+
+```text
+task-1/
+├── app/                        # Node.js Microservice Source Code
+│   ├── src/                    # API logic (index.js)
+│   ├── tests/                  # Jest unit tests (api.test.js)
+│   ├── Dockerfile              # Production-optimized Dockerfile
+│   ├── package.json            # Node dependencies
+│   └── package-lock.json       # Deterministic dependency tree
+├── k8s/                        # Kubernetes Manifests
+│   ├── deployment.yaml         # K8s Deployment (ReplicaSet, Pods)
+│   └── service.yaml            # K8s Service (AWS Classic LoadBalancer)
+├── iam/                        # AWS IAM Configurations
+│   └── github-oidc-trust-policy.json # OIDC Federation Trust Policy
+├── screenshots/                # Proof of execution and pipeline success
+└── README.md                   # Task documentation
+```
 
 ## 🔐 Security & Authentication Architecture
 This pipeline was designed to use **OpenID Connect (OIDC)** as the authentication mechanism between GitHub Actions and AWS, which eliminates the need for long-lived IAM access keys. 
