@@ -149,7 +149,11 @@ Pipeline logs confirming the successful rollout of the deployment to EKS.
 ![Rollout Status](screenshots/cicd-06-rollout-done.png)
 
 ### 7. Environment Cleanup
-To prevent unnecessary AWS charges after successfully validating the deployment, the Kubernetes cluster and its underlying infrastructure were destroyed using the following command:
+To prevent unnecessary AWS charges after successfully validating the deployment, the Kubernetes cluster and the ECR container repository were destroyed using the following commands:
 ```bash
+# Delete the EKS Cluster
 eksctl delete cluster --name devops-task-cluster --region ap-south-1
+
+# Delete the ECR Repository (forced to remove stored images)
+aws ecr delete-repository --repository-name product-api --region ap-south-1 --force
 ```
