@@ -14,9 +14,9 @@ Each task is self-contained within its own directory, containing all associated 
 
 | Task | Primary Objective | Code / Manifests Path | Detailed Guide | Proof of Submission |
 |---|---|---|---|---|
-| **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`ci-cd/`](ci-cd/) | [`ci-cd/README.md`](ci-cd/README.md) | [`ci-cd/screenshots/`](ci-cd/screenshots/) |
-| **Task-2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`cloudfront/`](cloudfront/) | [`cloudfront/README.md`](cloudfront/README.md) | [`cloudfront/screenshots/`](cloudfront/screenshots/) |
-| **Task-3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`asg-alb/`](asg-alb/) | [`asg-alb/README.md`](asg-alb/README.md) | [`asg-alb/screenshots/`](asg-alb/screenshots/) |
+| **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`ci-cd/`](ci-cd/) | [`Task-1-CI-CD/README.md`](Task-1-CI-CD/README.md) | [`Task-1-CI-CD/screenshots/`](Task-1-CI-CD/screenshots/) |
+| **Task-2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`cloudfront/`](cloudfront/) | [`Task-2-CloudFront/README.md`](Task-2-CloudFront/README.md) | [`Task-2-CloudFront/screenshots/`](Task-2-CloudFront/screenshots/) |
+| **Task-3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`asg-alb/`](asg-alb/) | [`Task-3-ASG-ALB/README.md`](Task-3-ASG-ALB/README.md) | [`Task-3-ASG-ALB/screenshots/`](Task-3-ASG-ALB/screenshots/) |
 
 ---
 
@@ -65,18 +65,18 @@ task/
 
 ## Tasks Summary
 
-### [Task-1: CI/CD](ci-cd/README.md)
+### [Task-1: CI/CD](Task-1-CI-CD/README.md)
 - **Goal**: Implement a non-breaking delivery pipeline triggered on Git pushes.
 - **Workflow Steps**:
   1. **Run Tests**: Installs dependencies and runs Jest unit tests covering positive and negative API paths.
   2. **Build & Push**: Logs into Amazon ECR via IAM credentials, builds an Alpine-based Docker container, tags it with the immutable Git commit SHA and `latest`, and pushes both tags.
   3. **Deploy to K8s**: Authenticates with Amazon EKS, substitutes the dynamic image tag into Kubernetes manifests, applies Deployment and LoadBalancer Service configurations, and verifies rollout completion.
 - **Microservice**: Node.js Express Product API exposing `/health` for Kubernetes probes and `/products` for CRUD operations.
-- **Full Guide**: Refer to [`ci-cd/README.md`](ci-cd/README.md).
+- **Full Guide**: Refer to [`Task-1-CI-CD/README.md`](Task-1-CI-CD/README.md).
 
 ---
 
-### [Task-2: CloudFront](cloudfront/README.md)
+### [Task-2: CloudFront](Task-2-CloudFront/README.md)
 - **Goal**: Host a static web portal on Amazon S3 with global CDN caching and strict access control.
 - **Security & Delivery Highlights**:
   1. **S3 Hardening**: All 4 Block Public Access toggles are permanently enabled.
@@ -84,11 +84,11 @@ task/
   3. **Direct S3 Restriction**: Direct HTTP/S attempts to the S3 bucket endpoint return `403 Access Denied`.
   4. **Custom 404 Routing**: S3 missing keys route through CloudFront to custom `error.html`.
   5. **Cache Invalidation**: On asset deployment, invalidation requests (`/*`) clear edge caches globally.
-- **Full Guide**: Refer to [`cloudfront/README.md`](cloudfront/README.md).
+- **Full Guide**: Refer to [`Task-2-CloudFront/README.md`](Task-2-CloudFront/README.md).
 
 ---
 
-### [Task-3: ASG + ALB](asg-alb/README.md)
+### [Task-3: ASG + ALB](Task-3-ASG-ALB/README.md)
 - **Goal**: Provision a highly-available, self-healing web server fleet across multiple Availability Zones.
 - **Architecture Highlights**:
   1. **Security Isolation**: Internet traffic only enters the Application Load Balancer (ALB SG); EC2 web servers only accept traffic from the ALB SG.
@@ -96,7 +96,7 @@ task/
   3. **Target Group & ALB**: Distributes traffic across subnets and runs continuous HTTP health checks on `/`.
   4. **CPU Auto Scaling**: CloudWatch Target Tracking scaling policy monitors `ASGAverageCPUUtilization` and dynamically adds instances when average CPU utilization exceeds **70%**.
   5. **Self-Healing Replacement**: Automatically detects terminated or unhealthy instances via ELB health checks and launches replacements to maintain the desired capacity of 2 nodes.
-- **Full Guide**: Refer to [`asg-alb/README.md`](asg-alb/README.md).
+- **Full Guide**: Refer to [`Task-3-ASG-ALB/README.md`](Task-3-ASG-ALB/README.md).
 
 ---
 
@@ -104,7 +104,7 @@ task/
 
 For submission, each task folder contains an isolated `screenshots/` directory. Capture each proof and place the file in the matching path below:
 
-### CI/CD Screenshots ([`ci-cd/screenshots/`](ci-cd/screenshots/))
+### CI/CD Screenshots ([`Task-1-CI-CD/screenshots/`](Task-1-CI-CD/screenshots/))
 - `cicd-01-repo-secrets.png`: GitHub repository Secrets configuration with OIDC (`AWS_ROLE_ARN`, `EKS_CLUSTER_NAME`).
 - `cicd-02-pipeline-running.png`: GitHub Actions tab showing triggered pipeline execution.
 - `cicd-03-tests-passed.png`: Expanded "Run Tests" job output showing all unit tests green.
@@ -112,7 +112,7 @@ For submission, each task folder contains an isolated `screenshots/` directory. 
 - `cicd-05-k8s-deploy.png`: Terminal output of `kubectl get pods -n production` showing healthy running pods.
 - `cicd-06-rollout-done.png`: GitHub Actions deploy job output showing rollout successfully completed.
 
-### Task 2 Screenshots ([`cloudfront/screenshots/`](cloudfront/screenshots/))
+### Task 2 Screenshots ([`Task-2-CloudFront/screenshots/`](Task-2-CloudFront/screenshots/))
 - `cf-01-bucket-created.png`: S3 bucket showing all 4 Public Access Block settings enabled.
 - `cf-02-files-uploaded.png`: S3 console objects tab showing `index.html` and `error.html`.
 - `cf-03-bucket-policy.png`: S3 permissions tab showing OAC bucket policy attached.
@@ -121,7 +121,7 @@ For submission, each task folder contains an isolated `screenshots/` directory. 
 - `cf-06-direct-s3-blocked.png`: Web browser or curl showing `403 Forbidden` when attempting direct S3 access.
 - `cf-07-cache-invalidation.png`: AWS CLI or console showing completed cache invalidation.
 
-### Task 3 Screenshots ([`asg-alb/screenshots/`](asg-alb/screenshots/))
+### Task 3 Screenshots ([`Task-3-ASG-ALB/screenshots/`](Task-3-ASG-ALB/screenshots/))
 - `asg-01-launch-template.png`: EC2 Launch Template console showing `product-api-lt`.
 - `asg-02-asg-created.png`: Auto Scaling Group console showing `product-api-asg` with desired=2.
 - `asg-03-alb-created.png`: Load Balancers console showing `product-api-alb` in `Active` status.
@@ -159,7 +159,7 @@ As an alternative, **OpenID Connect (OIDC)** can be used to securely assume an I
   }
 }
 ```
-*The infrastructure code and IAM configurations for this exact OIDC implementation are preserved in the `ci-cd/iam/` directory for review.*
+*The infrastructure code and IAM configurations for this exact OIDC implementation are preserved in the `Task-1-CI-CD/iam/` directory for review.*
 
 ## 🏗️ CI/CD Overview: Node.js Microservice
 
