@@ -12,47 +12,47 @@ Traffic is distributed across multiple Availability Zones using an **Application
 
 ## 🚀 Execution Guide & Commands Log
 
-This entire infrastructure was provisioned autonomously using our `scripts/asg-alb-setup.sh` script.
+The infrastructure was provisioned autonomously using `scripts/asg-alb-setup.sh`. The script dynamically fetches the active default VPC, auto-remediates missing Availability Zone subnets, and fetches the latest region-specific Amazon Linux 2023 AMI via AWS Systems Manager (SSM).
 
-### 1. Provision Security Groups & Rules
+Below are the core AWS CLI commands executed by the automation:
+
+### 1. Provision Security Groups
 ```bash
 # ALB Security Group (Internet Facing)
-aws ec2 create-security-group --group-name alb-sg --description "Allow HTTP from internet"
-aws ec2 authorize-security-group-ingress --group-id sg-alb --protocol tcp --port 80 --cidr 0.0.0.0/0
+aws ec2 create-security-group --group-name alb-sg-1791638382 --description "Allow HTTP from internet" --vpc-id vpc-028724486a6015b2e
+aws ec2 authorize-security-group-ingress --group-id sg-02516ebd33d6eb020 --protocol tcp --port 80 --cidr 0.0.0.0/0
 
-# EC2 Security Group (Isolated)
-aws ec2 create-security-group --group-name ec2-asg-sg --description "Allow HTTP only from ALB"
-aws ec2 authorize-security-group-ingress --group-id sg-ec2 --protocol tcp --port 80 --source-group sg-alb
+# EC2 Security Group (Isolated, only accepts traffic from ALB)
+aws ec2 create-security-group --group-name ec2-asg-sg-1791638382 --description "Allow HTTP only from ALB" --vpc-id vpc-028724486a6015b2e
+aws ec2 authorize-security-group-ingress --group-id sg-06e12ef993ef92958 --protocol tcp --port 80 --source-group sg-02516ebd33d6eb020
 ```
 
 ### 2. Create Launch Template & Target Group
 ```bash
-# Fetches latest AL2023 AMI dynamically via SSM
-aws ec2 create-launch-template --launch-template-name product-api-lt --launch-template-data file://config.json
-aws elbv2 create-target-group --name product-api-tg --protocol HTTP --port 80 --health-check-path "/"
+# Dynamically fetch the latest Amazon Linux 2023 AMI from SSM
+AMI_ID=$(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64 --query 'Parameters[0].Value' --output text)
+
+# Create Launch Template with bootstrap UserData
+aws ec2 create-launch-template --launch-template-name product-api-lt-1791638382 --launch-template-data file://config.json
+
+# Create HTTP Target Group
+aws elbv2 create-target-group --name product-api-tg-1791638382 --protocol HTTP --port 80 --vpc-id vpc-028724486a6015b2e --health-check-path "/"
 ```
 
 ### 3. Deploy Application Load Balancer
 ```bash
-aws elbv2 create-load-balancer --name product-api-alb --subnets subnet-1 subnet-2 --security-groups sg-alb
-aws elbv2 create-listener --load-balancer-arn arn:aws... --protocol HTTP --port 80 --default-actions Type=forward,TargetGroupArn=arn:aws...
+# Deployed across two different Availability Zones (ap-south-1b and ap-south-1c)
+aws elbv2 create-load-balancer --name product-api-alb-1791638382 --subnets subnet-0d7adbc7f76de1b61 subnet-0dedbc5b12f1afd97 --security-groups sg-02516ebd33d6eb020
+aws elbv2 create-listener --load-balancer-arn <ALB_ARN> --protocol HTTP --port 80 --default-actions Type=forward,TargetGroupArn=<TG_ARN>
 ```
 
-### 4. Deploy Auto Scaling Group & Policy
+### 4. Deploy Auto Scaling Group & Scaling Policy
 ```bash
-aws autoscaling create-auto-scaling-group \
-  --auto-scaling-group-name product-api-asg \
-  --launch-template LaunchTemplateId=lt-123,Version=$Latest \
-  --min-size 1 --max-size 4 --desired-capacity 2 \
-  --vpc-zone-identifier "subnet-1,subnet-2" \
-  --target-group-arns arn:aws... \
-  --health-check-type ELB --health-check-grace-period 60
+# Create ASG
+aws autoscaling create-auto-scaling-group   --auto-scaling-group-name product-api-asg-1791638382   --launch-template LaunchTemplateId=lt-08a10389682060ca3,Version=$Latest   --min-size 1 --max-size 4 --desired-capacity 2   --vpc-zone-identifier "subnet-0d7adbc7f76de1b61,subnet-0dedbc5b12f1afd97"   --target-group-arns <TG_ARN>   --health-check-type ELB --health-check-grace-period 60
 
-aws autoscaling put-scaling-policy \
-  --auto-scaling-group-name product-api-asg \
-  --policy-name scale-out-cpu-70 \
-  --policy-type TargetTrackingScaling \
-  --target-tracking-configuration '{"PredefinedMetricSpecification": {"PredefinedMetricType": "ASGAverageCPUUtilization"}, "TargetValue": 70.0}'
+# Apply CPU > 70% Target Tracking Scaling Policy
+aws autoscaling put-scaling-policy   --auto-scaling-group-name product-api-asg-1791638382   --policy-name scale-out-cpu-70   --policy-type TargetTrackingScaling   --target-tracking-configuration '{"PredefinedMetricSpecification": {"PredefinedMetricType": "ASGAverageCPUUtilization"}, "TargetValue": 70.0}'
 ```
 
 ---
@@ -71,26 +71,27 @@ The Target Tracking scaling policy configured to trigger when CPU > 70%.
 Proof of the ASG automatically detecting a terminated instance and successfully launching a replacement.
 ![Auto Replacement](screenshots/asg-03-auto-replacement.png)
 
+---
+
 ## 🧹 Environment Cleanup
 
-To prevent ongoing EC2 instance and Load Balancer hourly charges, destroy the infrastructure using the AWS Console:
+To prevent ongoing EC2 instance and Load Balancer hourly charges, destroy the infrastructure using either the AWS Console or the AWS CLI commands below:
 
-### 1. Delete the Auto Scaling Group
-1. Navigate to **EC2 -> Auto Scaling Groups**.
-2. Select the `product-api-asg-*` group.
-3. Click **Delete**. *(This will automatically terminate the running EC2 instances).*
+**AWS CLI Cleanup Commands:**
+```bash
+# 1. Delete the Auto Scaling Group (using --force-delete automatically terminates running EC2 instances)
+aws autoscaling delete-auto-scaling-group --auto-scaling-group-name product-api-asg-1791638382 --force-delete
 
-### 2. Delete the Application Load Balancer
-1. Navigate to **EC2 -> Load Balancers**.
-2. Select the `product-api-alb-*` balancer.
-3. Click **Actions -> Delete**.
+# 2. Delete the Application Load Balancer
+aws elbv2 delete-load-balancer --load-balancer-arn <YOUR_ALB_ARN>
 
-### 3. Delete the Target Group
-1. Navigate to **EC2 -> Target Groups**.
-2. Select the `product-api-tg-*` group.
-3. Click **Actions -> Delete**.
+# 3. Delete the Target Group
+aws elbv2 delete-target-group --target-group-arn <YOUR_TG_ARN>
 
-### 4. Delete the Launch Template
-1. Navigate to **EC2 -> Launch Templates**.
-2. Select `product-api-lt-*`.
-3. Click **Actions -> Delete template**.
+# 4. Delete the Launch Template
+aws ec2 delete-launch-template --launch-template-name product-api-lt-1791638382
+
+# 5. Delete the Security Groups (Delete EC2 first, as ALB SG is referenced by it)
+aws ec2 delete-security-group --group-id sg-06e12ef993ef92958
+aws ec2 delete-security-group --group-id sg-02516ebd33d6eb020
+```
