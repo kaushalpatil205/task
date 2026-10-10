@@ -135,6 +135,11 @@ aws s3 rb s3://production-portal-1791636022 --force
     ```
 
 ### 3. Delete the Origin Access Control (OAC)
+*Note: The CloudFront distribution must be completely deleted before AWS allows you to delete the OAC.*
 ```bash
-aws cloudfront delete-origin-access-control --id E1M1DW696YS0S6
+# 1. Fetch the ETag for the OAC
+OAC_ETAG=$(aws cloudfront get-origin-access-control --id E1M1DW696YS0S6 --query 'ETag' --output text)
+
+# 2. Delete the OAC
+aws cloudfront delete-origin-access-control --id E1M1DW696YS0S6 --if-match $OAC_ETAG
 ```
