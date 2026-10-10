@@ -26,33 +26,35 @@ Each task is self-contained within its own directory, containing all associated 
 
 | Task | Primary Objective | Code / Manifests Path | Detailed Guide | Proof of Submission |
 |---|---|---|---|---|
-| **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`ci-cd/`](ci-cd/) | [`Task-1-CI-CD/README.md`](Task-1-CI-CD/README.md) | [`Task-1-CI-CD/screenshots/`](Task-1-CI-CD/screenshots/) |
-| **Task-2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`cloudfront/`](cloudfront/) | [`Task-2-CloudFront/README.md`](Task-2-CloudFront/README.md) | [`Task-2-CloudFront/screenshots/`](Task-2-CloudFront/screenshots/) |
-| **Task-3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`asg-alb/`](asg-alb/) | [`Task-3-ASG-ALB/README.md`](Task-3-ASG-ALB/README.md) | [`Task-3-ASG-ALB/screenshots/`](Task-3-ASG-ALB/screenshots/) |
+| **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`Task-1-CI-CD/`](Task-1-CI-CD/) | [`Task-1-CI-CD/README.md`](Task-1-CI-CD/README.md) | [`Task-1-CI-CD/screenshots/`](Task-1-CI-CD/screenshots/) |
+| **Task-2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`Task-2-CloudFront/`](Task-2-CloudFront/) | [`Task-2-CloudFront/README.md`](Task-2-CloudFront/README.md) | [`Task-2-CloudFront/screenshots/`](Task-2-CloudFront/screenshots/) |
+| **Task-3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`Task-3-ASG-ALB/`](Task-3-ASG-ALB/) | [`Task-3-ASG-ALB/README.md`](Task-3-ASG-ALB/README.md) | [`Task-3-ASG-ALB/screenshots/`](Task-3-ASG-ALB/screenshots/) |
 
 ---
 
 ## Directory Structure
 
-```
+```text
 task/
 ├── .github/
 │   └── workflows/
 │       └── ci-cd.yml             # Global GitHub Actions workflow for CI/CD
 │
-├── Task-1-CI-CD/                       # CI/CD: CI/CD Pipeline
+├── Task-1-CI-CD/                 # Task-1: CI/CD Pipeline
 │   ├── README.md                 # In-depth CI/CD guide with architecture & embedded proofs
 │   ├── app/                      # Node.js product REST microservice
 │   │   ├── Dockerfile            # Production multi-stage Alpine Dockerfile
 │   │   ├── package.json          # Dependencies & test runners
 │   │   ├── src/index.js          # REST API & /health probe endpoint
 │   │   └── tests/app.test.js     # Jest unit test suite
+│   ├── iam/                      # AWS IAM Configurations
+│   │   └── github-oidc-trust-policy.json # Reference OIDC Federation Trust Policy
 │   ├── k8s/                      # Kubernetes deployment & service manifests
 │   │   ├── deployment.yaml
 │   │   └── service.yaml
 │   └── screenshots/              # CI/CD proof captures (cicd-01 to cicd-06)
 │
-├── Task-2-CloudFront/                       # Task-2: CloudFront + S3 Static Website
+├── Task-2-CloudFront/            # Task-2: CloudFront + S3 Static Website
 │   ├── README.md                 # In-depth Task 2 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   └── cloudfront-setup.sh   # Bash automation script (S3, OAC, Distribution, Policy)
@@ -61,7 +63,7 @@ task/
 │   │   └── s3-oac-policy.json    # Bucket policy enforcing CloudFront OAC access
 │   └── screenshots/              # Task 2 proof captures (cf-01 to cf-07)
 │
-├── Task-3-ASG-ALB/                       # Task-3: ASG + ALB + Auto Scaling
+├── Task-3-ASG-ALB/               # Task-3: ASG + ALB + Auto Scaling
 │   ├── README.md                 # In-depth Task 3 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   ├── asg-alb-setup.sh      # Bash automation script (VPC, ALB, TG, ASG, Policy)
@@ -177,7 +179,7 @@ As an alternative, **OpenID Connect (OIDC)** can be used to securely assume an I
 
 The application deployed in CI/CD is a Node.js/Express backend REST API. It acts as a headless data provider, exposing a `GET /api/products` JSON endpoint. 
 
-The `ci-cd/` directory is structured as follows:
+The `Task-1-CI-CD/` directory is structured as follows:
 *   `app/`: Contains the Node.js API code, Jest unit tests, and the multi-stage `Dockerfile`.
 *   `k8s/`: Contains the Kubernetes manifests (`deployment.yaml` and `service.yaml`) used to provision the pods and AWS LoadBalancer.
 *   `iam/`: Contains the security policies, specifically the OIDC Federation Trust Policy.
