@@ -26,7 +26,7 @@ Each task is self-contained within its own directory, containing all associated 
 
 | Task | Primary Objective | Code / Manifests Path | Detailed Guide | Proof of Submission |
 |---|---|---|---|---|
-| **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`Task-1-CI-CD/`](Task-1-CI-CD/) | [`Task-1-CI-CD/README.md`](Task-1-CI-CD/README.md) | [`Task-1-CI-CD/screenshots/`](Task-1-CI-CD/screenshots/) |
+| **Task-1: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`Task-1-CI-CD/`](Task-1-CI-CD/) | [`Task-1-CI-CD/README.md`](Task-1-CI-CD/README.md) | [`Task-1-CI-CD/screenshots/`](Task-1-CI-CD/screenshots/) |
 | **Task-2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`Task-2-CloudFront/`](Task-2-CloudFront/) | [`Task-2-CloudFront/README.md`](Task-2-CloudFront/README.md) | [`Task-2-CloudFront/screenshots/`](Task-2-CloudFront/screenshots/) |
 | **Task-3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`Task-3-ASG-ALB/`](Task-3-ASG-ALB/) | [`Task-3-ASG-ALB/README.md`](Task-3-ASG-ALB/README.md) | [`Task-3-ASG-ALB/screenshots/`](Task-3-ASG-ALB/screenshots/) |
 
