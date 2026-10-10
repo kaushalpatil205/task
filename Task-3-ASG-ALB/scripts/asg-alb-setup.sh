@@ -149,8 +149,6 @@ POLICY_ARN=$(aws autoscaling put-scaling-policy \
       "PredefinedMetricType": "ASGAverageCPUUtilization"
     },
     "TargetValue": 70.0,
-    "ScaleInCooldown": 300,
-    "ScaleOutCooldown": 60
   }' \
   --query 'PolicyARN' --output text)
 
