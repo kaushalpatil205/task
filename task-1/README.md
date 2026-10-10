@@ -32,14 +32,9 @@ task-1/
 ```
 
 ## 🔐 Security & Authentication Architecture
-This repository contains a **Dual-Pipeline Setup** to demonstrate both industry best practices and environment-specific pragmatic fallbacks.
+This repository utilizes standard IAM access keys for AWS authentication in the CI/CD pipeline. 
 
-You will find two distinct workflow files in the `.github/workflows/` directory:
-
-1.  **`ci-cd-oidc.yml` (The Ideal Standard):** This pipeline is engineered to use **OpenID Connect (OIDC)** as the authentication mechanism between GitHub Actions and AWS. This is the credential-less industry standard, eliminating the need for long-lived IAM keys. The exact infrastructure commands and IAM trust policies required to provision this are preserved in `task-1/iam/github-oidc-trust-policy.json`.
-2.  **`ci-cd.yml` (The Active Fallback):** During execution, the host AWS environment utilized AWS SSO (Identity Center), which enforced Service Control Policies (SCPs) actively preventing external `sts:AssumeRoleWithWebIdentity` federation. Therefore, this active pipeline utilizes a dedicated IAM User (`github-actions-deployer`) with standard long-lived access keys as a necessary fallback to bypass the SSO restriction.
-
-*The exact execution logs for provisioning both architectures are documented below.*
+As a best practice alternative, **OpenID Connect (OIDC)** can be used to securely authenticate without managing long-lived credentials. The exact infrastructure commands and IAM trust policies required to provision OIDC are preserved in `task-1/iam/github-oidc-trust-policy.json` for reference.
 
 ---
 
@@ -51,8 +46,8 @@ We created a private Amazon ECR repository to store the Docker images.
 aws ecr create-repository --repository-name product-api --region ap-south-1
 ```
 
-### Step 2: OpenID Connect (OIDC) Setup (Ideal Architecture)
-We configured AWS to trust GitHub Actions tokens.
+### Step 2: OpenID Connect (OIDC) Setup (Alternative)
+If using OIDC instead of hardcoded IAM keys, execute the following commands to configure AWS:
 ```bash
 # 1. Create the OIDC Provider in AWS
 aws iam create-open-id-connect-provider \
@@ -70,8 +65,8 @@ aws iam attach-role-policy --role-name github-actions-eks-deployer --policy-arn 
 aws iam attach-role-policy --role-name github-actions-eks-deployer --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
 ```
 
-### Step 3: IAM User Fallback Setup (For SSO Environments)
-Due to SSO restrictions on OIDC, we provisioned a dedicated IAM user with long-lived keys.
+### Step 3: IAM User Setup (Current Implementation)
+If using a standard IAM user (as implemented in this pipeline), provision a dedicated user and access keys:
 ```bash
 aws iam create-user --user-name github-actions-deployer
 aws iam attach-user-policy --user-name github-actions-deployer --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
