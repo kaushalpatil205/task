@@ -18,9 +18,9 @@ if [ "$VPC_ID" == "None" ] || [ -z "$VPC_ID" ]; then
     exit 1
 fi
 
-SUBNETS=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC_ID --query 'Subnets[0:2].SubnetId' --output text)
-SUBNET_1=$(echo $SUBNETS | awk '{print $1}')
-SUBNET_2=$(echo $SUBNETS | awk '{print $2}')
+SUBNET_LIST=($(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC_ID --query "Subnets[*].SubnetId" --output text))
+SUBNET_1=${SUBNET_LIST[0]}
+SUBNET_2=${SUBNET_LIST[1]}
 
 echo "    VPC ID  : $VPC_ID"
 echo "    Subnet 1: $SUBNET_1"
