@@ -28,7 +28,7 @@ task/
 │   └── workflows/
 │       └── ci-cd.yml             # Global GitHub Actions workflow for CI/CD
 │
-├── ci-cd/                       # CI/CD: CI/CD Pipeline
+├── Task-1-CI-CD/                       # CI/CD: CI/CD Pipeline
 │   ├── README.md                 # In-depth CI/CD guide with architecture & embedded proofs
 │   ├── app/                      # Node.js product REST microservice
 │   │   ├── Dockerfile            # Production multi-stage Alpine Dockerfile
@@ -40,7 +40,7 @@ task/
 │   │   └── service.yaml
 │   └── screenshots/              # CI/CD proof captures (cicd-01 to cicd-06)
 │
-├── cloudfront/                       # Task-2: CloudFront + S3 Static Website
+├── Task-2-CloudFront/                       # Task-2: CloudFront + S3 Static Website
 │   ├── README.md                 # In-depth Task 2 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   └── cloudfront-setup.sh   # Bash automation script (S3, OAC, Distribution, Policy)
@@ -49,7 +49,7 @@ task/
 │   │   └── s3-oac-policy.json    # Bucket policy enforcing CloudFront OAC access
 │   └── screenshots/              # Task 2 proof captures (cf-01 to cf-07)
 │
-├── asg-alb/                       # Task-3: ASG + ALB + Auto Scaling
+├── Task-3-ASG-ALB/                       # Task-3: ASG + ALB + Auto Scaling
 │   ├── README.md                 # In-depth Task 3 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   ├── asg-alb-setup.sh      # Bash automation script (VPC, ALB, TG, ASG, Policy)
