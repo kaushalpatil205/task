@@ -11,6 +11,19 @@ The application deployed in this task is a backend **RESTful API Microservice** 
 *   **Security & Optimization:** The app is containerized via a multi-stage `Dockerfile` using the lightweight `node:18-alpine` base image. It strictly installs production-only dependencies and runs under a restricted, non-root `node` user to adhere to container security best practices.
 *   **Testing:** The API logic is backed by a full testing suite using `Jest` and `Supertest`, which runs automatically in the CI pipeline.
 
+## ⚙️ The CI/CD Pipeline Architecture
+We built an enterprise-grade Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions. The pipeline enforces strict quality gates before any code reaches the production EKS cluster.
+
+**1. Continuous Integration (CI)**
+*   **Linting & Unit Testing:** Every push triggers an automated Jest testing suite. If any endpoint (e.g., `/api/products`) fails its expected assertions, the pipeline breaks, preventing bad code from being built.
+*   **Immutable Builds:** Once tests pass, Docker builds the image. The image is tagged dynamically with the unique Git Commit SHA to ensure perfect traceability. 
+*   **Vulnerability Scanning:** The built container image is scanned by **Trivy** for critical OS and library vulnerabilities before it is allowed into the registry.
+
+**2. Continuous Deployment (CD)**
+*   **Registry Push:** The secure image is pushed to a private Amazon ECR repository.
+*   **Kubernetes Rollout:** The pipeline authenticates with the Amazon EKS cluster, dynamically updates the `deployment.yaml` with the new immutable image tag, and applies it. Kubernetes performs a rolling update to ensure zero downtime.
+
+
 ## 📂 Project File Structure
 The `ci-cd/` directory is organized into modular components separating application code, Kubernetes configurations, and IAM policies:
 

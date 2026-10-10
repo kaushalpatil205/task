@@ -6,7 +6,19 @@ This repository contains production-ready implementations, configuration scripts
 2. **Task-2: CloudFront**: Secure Static Website Delivery (Amazon CloudFront + S3 with Origin Access Control)
 3. **Task-3: ASG + ALB**: High-Availability & Self-Healing Web Cluster (ASG + ALB with Dynamic CPU Auto Scaling)
 
+
 ---
+
+## 🏛️ Architecture Context: The Decoupled Three-Tier Model
+
+The tasks in this repository combine to form the infrastructure for a highly available, decoupled **Three-Tier Architecture**:
+*   **Presentation Tier (Frontend):** Hosted entirely serverless using Amazon S3 and distributed globally via CloudFront (Demonstrated in **Task 2**).
+*   **Application Tier (Backend API):** A Node.js REST API layer. We demonstrate two enterprise strategies for hosting this: Containerized on Amazon EKS (**Task 1**) and Virtualized on EC2 Auto Scaling Groups (**Task 3**).
+*   **Data Tier (Database):** While the database is mocked via JSON in this specific iteration to focus on DevOps tooling, the architecture is primed to connect to Amazon RDS or DynamoDB via private subnets.
+
+---
+
+
 
 ## Repository Navigation & Path Directory
 
