@@ -131,3 +131,9 @@ kubectl get svc product-api-svc -n production
 ### 6. Kubernetes Rollout Status
 Pipeline logs confirming the successful rollout of the deployment to EKS.
 ![Rollout Status](screenshots/cicd-06-rollout-done.png)
+
+### 7. Environment Cleanup
+To prevent unnecessary AWS charges after successfully validating the deployment, the Kubernetes cluster and its underlying infrastructure were destroyed using the following command:
+```bash
+eksctl delete cluster --name devops-task-cluster --region ap-south-1
+```
