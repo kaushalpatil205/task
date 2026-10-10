@@ -6,7 +6,7 @@ set -e
 
 REGION="ap-south-1"
 # Amazon Linux 2023 in ap-south-1
-AMI_ID="ami-053b12d3152c0ce71" 
+AMI_ID=$(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64 --query "Parameters[0].Value" --output text) 
 INSTANCE_TYPE="t3.micro"
 SUFFIX=$(date +%s)
 
