@@ -1,12 +1,15 @@
 # Task 1: Microservice CI/CD Pipeline to Amazon EKS
 
 ## 📖 Microservice Overview
-The application deployed in this task is a lightweight, backend **RESTful API Microservice** built using Node.js and Express. 
+The application deployed in this task is a backend **RESTful API Microservice** built using Node.js (v18) and Express.js. It acts as the backend "Product Catalog" data provider for a decoupled web architecture.
 
-Its primary characteristics include:
-*   **Endpoints:** It exposes a `GET /health` endpoint (used by Kubernetes for liveness and readiness probes) and a `GET /api/products` endpoint serving mock JSON product data.
-*   **Testing:** It is fully unit-tested using `Jest` and `Supertest` to ensure API reliability before deployment.
-*   **Containerization:** The application is packaged using a multi-stage `Dockerfile` optimized for production, ensuring a minimal attack surface and small image size.
+**Key Features & Configuration:**
+*   **API Endpoints:** 
+    *   `GET /api/products`: Returns an array of JSON objects simulating a product database fetch (e.g., id, name, price). This is the data payload consumed by the frontend.
+    *   `GET /health`: Returns `{ "status": "UP" }`. This is a dedicated endpoint used to monitor the application's status.
+*   **Kubernetes Probes:** The `/health` endpoint is integrated directly into the `deployment.yaml` via `livenessProbe` and `readinessProbe`. This allows Kubernetes to know exactly when the Node.js app is ready to receive traffic, and triggers automatic restarts if the process crashes.
+*   **Security & Optimization:** The app is containerized via a multi-stage `Dockerfile` using the lightweight `node:18-alpine` base image. It strictly installs production-only dependencies and runs under a restricted, non-root `node` user to adhere to container security best practices.
+*   **Testing:** The API logic is backed by a full testing suite using `Jest` and `Supertest`, which runs automatically in the CI pipeline.
 
 ## 📂 Project File Structure
 The `task-1/` directory is organized into modular components separating application code, Kubernetes configurations, and IAM policies:
