@@ -145,12 +145,10 @@ For submission, each task folder contains an isolated `screenshots/` directory. 
 ## 🔒 Security & Authentication Architecture
 
 **Note on AWS Authentication Strategy:**
-While the GitHub Actions pipelines in this repository are currently configured to use standard IAM Access Keys and Session Tokens (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`), this is a deliberate fallback implementation. 
-
-During the environment setup, we identified that the host AWS SSO (Identity Center) organization enforces Service Control Policies (SCPs) that strictly deny `sts:AssumeRoleWithWebIdentity` for external identity providers. 
+The GitHub Actions pipelines in this repository are configured to use standard IAM Access Keys and Session Tokens (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) for simplicity and ease of testing.
 
 **Best Practice Implementation:**
-In a standard, unrestricted AWS production environment, this pipeline is designed to authenticate via **OpenID Connect (OIDC)** to securely assume an IAM role without managing long-lived credentials. The IAM Trust Policy mapped to the OIDC provider would use the following condition to restrict access specifically to this repository:
+As an alternative, **OpenID Connect (OIDC)** can be used to securely assume an IAM role without managing long-lived credentials. The IAM Trust Policy mapped to the OIDC provider would use the following condition to restrict access specifically to this repository:
 ```json
 "Condition": {
   "StringEquals": {
@@ -162,8 +160,6 @@ In a standard, unrestricted AWS production environment, this pipeline is designe
 }
 ```
 *The infrastructure code and IAM configurations for this exact OIDC implementation are preserved in the `task-1/iam/` directory for review.*
-
----
 
 ## 🏗️ Task 1 Overview: Node.js Microservice
 
