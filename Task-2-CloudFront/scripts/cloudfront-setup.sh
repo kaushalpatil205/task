@@ -1,11 +1,11 @@
 #!/bin/bash
 # CloudFront + S3 static website setup
-# Run: bash cloudfront-setup.sh
+# Run: bash scripts/cloudfront-setup.sh
 # Requirements: AWS CLI configured with appropriate permissions
 
 set -e
 
-BUCKET_NAME="my-static-site-$(date +%s)"
+BUCKET_NAME="production-portal-$(date +%s)"
 REGION="ap-south-1"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
@@ -22,32 +22,16 @@ aws s3api put-public-access-block \
   --public-access-block-configuration \
     BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
-# upload a sample index.html
-echo "==> Uploading sample website files"
-cat > /tmp/index.html <<HTML
-<!DOCTYPE html>
-<html>
-  <head><title>My Static Site</title></head>
-  <body><h1>Deployed via CloudFront + S3</h1></body>
-</html>
-HTML
-
-cat > /tmp/error.html <<HTML
-<!DOCTYPE html>
-<html>
-  <head><title>404</title></head>
-  <body><h1>Page Not Found</h1></body>
-</html>
-HTML
-
-aws s3 cp /tmp/index.html s3://"$BUCKET_NAME"/index.html
-aws s3 cp /tmp/error.html s3://"$BUCKET_NAME"/error.html
+# upload the beautiful website files we pre-created
+echo "==> Uploading static website files"
+aws s3 cp static/index.html s3://"$BUCKET_NAME"/index.html
+aws s3 cp static/error.html s3://"$BUCKET_NAME"/error.html
 
 # create Origin Access Control
 echo "==> Creating Origin Access Control (OAC)"
 OAC_ID=$(aws cloudfront create-origin-access-control \
   --origin-access-control-config \
-    Name=MyOAC,OriginAccessControlOriginType=s3,SigningBehavior=always,SigningProtocol=sigv4,Description="OAC for static site" \
+    Name=MyOAC-$(date +%s),OriginAccessControlOriginType=s3,SigningBehavior=always,SigningProtocol=sigv4,Description="OAC for static site" \
   --query 'OriginAccessControl.Id' --output text)
 
 echo "    OAC ID: $OAC_ID"
@@ -83,6 +67,12 @@ DIST_CONFIG=$(cat <<JSON
     "Items": [
       {
         "ErrorCode": 404,
+        "ResponsePagePath": "/error.html",
+        "ResponseCode": "404",
+        "ErrorCachingMinTTL": 10
+      },
+      {
+        "ErrorCode": 403,
         "ResponsePagePath": "/error.html",
         "ResponseCode": "404",
         "ErrorCachingMinTTL": 10
@@ -133,7 +123,6 @@ echo ""
 echo "Setup complete!"
 echo "  Bucket  : $BUCKET_NAME"
 echo "  Site URL: https://$DIST_DOMAIN"
-echo "  Dist ID : $DIST_ID  (save this for cache invalidation)"
+echo "  Dist ID : $DIST_ID"
 echo ""
-echo "To invalidate cache after a deploy:"
-echo "  aws cloudfront create-invalidation --distribution-id $DIST_ID --paths '/*'"
+echo "Note: It will take about 3-5 minutes for CloudFront to fully deploy globally."
