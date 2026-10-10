@@ -70,3 +70,27 @@ The Target Tracking scaling policy configured to trigger when CPU > 70%.
 ### 3. Unhealthy Instance Replacement (Self-Healing)
 Proof of the ASG automatically detecting a terminated instance and successfully launching a replacement.
 ![Auto Replacement](screenshots/asg-03-auto-replacement.png)
+
+## 🧹 Environment Cleanup
+
+To prevent ongoing EC2 instance and Load Balancer hourly charges, destroy the infrastructure using the AWS Console:
+
+### 1. Delete the Auto Scaling Group
+1. Navigate to **EC2 -> Auto Scaling Groups**.
+2. Select the `product-api-asg-*` group.
+3. Click **Delete**. *(This will automatically terminate the running EC2 instances).*
+
+### 2. Delete the Application Load Balancer
+1. Navigate to **EC2 -> Load Balancers**.
+2. Select the `product-api-alb-*` balancer.
+3. Click **Actions -> Delete**.
+
+### 3. Delete the Target Group
+1. Navigate to **EC2 -> Target Groups**.
+2. Select the `product-api-tg-*` group.
+3. Click **Actions -> Delete**.
+
+### 4. Delete the Launch Template
+1. Navigate to **EC2 -> Launch Templates**.
+2. Select `product-api-lt-*`.
+3. Click **Actions -> Delete template**.
