@@ -10,17 +10,24 @@ AMI_ID="ami-053b12d3152c0ce71"
 INSTANCE_TYPE="t3.micro"
 SUFFIX=$(date +%s)
 
-echo "==> Fetching Default VPC and Subnets..."
+echo "==> Fetching Default VPC..."
 VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)
 
-if [ "$VPC_ID" == "None" ] || [ -z "$VPC_ID" ]; then
-    echo "Error: No default VPC found. Please specify a VPC manually."
-    exit 1
-fi
-
+echo "==> Validating Subnets..."
 SUBNET_LIST=($(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC_ID --query "Subnets[*].SubnetId" --output text))
+
 SUBNET_1=${SUBNET_LIST[0]}
 SUBNET_2=${SUBNET_LIST[1]}
+
+# Auto-remediate if the default VPC is missing a second subnet
+if [ -z "$SUBNET_2" ]; then
+    echo "    Detected only 1 subnet in VPC. Automatically provisioning a 2nd Subnet in ap-south-1b..."
+    SUBNET_2=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 172.31.16.0/20 --availability-zone ap-south-1b --query 'Subnet.SubnetId' --output text)
+    
+    echo "    Enabling Public IPs for new Subnet..."
+    aws ec2 modify-subnet-attribute --subnet-id $SUBNET_2 --map-public-ip-on-launch
+    sleep 2
+fi
 
 echo "    VPC ID  : $VPC_ID"
 echo "    Subnet 1: $SUBNET_1"
@@ -86,7 +93,7 @@ echo "    Launch Template ID: $LT_ID"
 # ---- Application Load Balancer ----
 echo "==> Creating Application Load Balancer (ALB)"
 ALB_ARN=$(aws elbv2 create-load-balancer \
-  --name "product-api-alb" \
+  --name "product-api-alb-$SUFFIX" \
   --subnets "$SUBNET_1" "$SUBNET_2" \
   --security-groups "$ALB_SG" \
   --query 'LoadBalancers[0].LoadBalancerArn' --output text)
@@ -96,7 +103,7 @@ echo "    ALB ARN: $ALB_ARN"
 # ---- Target Group ----
 echo "==> Creating Target Group"
 TG_ARN=$(aws elbv2 create-target-group \
-  --name "product-api-tg" \
+  --name "product-api-tg-$SUFFIX" \
   --protocol HTTP \
   --port 80 \
   --vpc-id "$VPC_ID" \
@@ -120,7 +127,7 @@ aws elbv2 create-listener \
 # ---- Auto Scaling Group ----
 echo "==> Creating Auto Scaling Group (ASG)"
 aws autoscaling create-auto-scaling-group \
-  --auto-scaling-group-name "product-api-asg" \
+  --auto-scaling-group-name "product-api-asg-$SUFFIX" \
   --launch-template "LaunchTemplateId=$LT_ID,Version=\$Latest" \
   --min-size 1 \
   --max-size 4 \
@@ -134,7 +141,7 @@ aws autoscaling create-auto-scaling-group \
 # ---- Scaling Policy: CPU > 70% ----
 echo "==> Creating CPU-based Target Tracking scaling policy (> 70%)"
 POLICY_ARN=$(aws autoscaling put-scaling-policy \
-  --auto-scaling-group-name "product-api-asg" \
+  --auto-scaling-group-name "product-api-asg-$SUFFIX" \
   --policy-name "scale-out-cpu-70" \
   --policy-type TargetTrackingScaling \
   --target-tracking-configuration '{
@@ -149,7 +156,7 @@ POLICY_ARN=$(aws autoscaling put-scaling-policy \
 
 echo "    Policy ARN: $POLICY_ARN"
 
-echo "==> Waiting for ALB to become active (takes about 2 minutes)..."
+echo "==> Waiting for ALB to become active (takes about 2-3 minutes)..."
 aws elbv2 wait load-balancer-available --load-balancer-arns "$ALB_ARN"
 
 ALB_DNS=$(aws elbv2 describe-load-balancers \
@@ -161,7 +168,7 @@ echo "========================================="
 echo "✅ Setup Complete!"
 echo "========================================="
 echo "  ALB DNS : http://$ALB_DNS"
-echo "  ASG     : product-api-asg (min=1, max=4, desired=2)"
+echo "  ASG     : product-api-asg-$SUFFIX (min=1, max=4, desired=2)"
 echo "  Policy  : Scale out when avg CPU > 70%"
 echo ""
 echo "To test high availability and unhealthy replacement:"
