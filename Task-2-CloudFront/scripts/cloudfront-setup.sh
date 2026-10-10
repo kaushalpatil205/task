@@ -63,7 +63,7 @@ DIST_CONFIG=$(cat <<JSON
   },
   "DefaultRootObject": "index.html",
   "CustomErrorResponses": {
-    "Quantity": 1,
+    "Quantity": 2,
     "Items": [
       {
         "ErrorCode": 404,
