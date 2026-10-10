@@ -1,4 +1,4 @@
-# Task 1: Microservice CI/CD Pipeline to Amazon EKS
+# CI/CD: Microservice CI/CD Pipeline to Amazon EKS
 
 ## 📖 Microservice Overview
 The application deployed in this task is a backend **RESTful API Microservice** built using Node.js (v18) and Express.js. It acts as the backend "Product Catalog" data provider for a decoupled web architecture.
@@ -12,10 +12,10 @@ The application deployed in this task is a backend **RESTful API Microservice** 
 *   **Testing:** The API logic is backed by a full testing suite using `Jest` and `Supertest`, which runs automatically in the CI pipeline.
 
 ## 📂 Project File Structure
-The `task-1/` directory is organized into modular components separating application code, Kubernetes configurations, and IAM policies:
+The `ci-cd/` directory is organized into modular components separating application code, Kubernetes configurations, and IAM policies:
 
 ```text
-task-1/
+ci-cd/
 ├── app/                        # Node.js Microservice Source Code
 │   ├── src/                    # API logic (index.js)
 │   ├── tests/                  # Jest unit tests (api.test.js)
@@ -34,7 +34,7 @@ task-1/
 ## 🔐 Security & Authentication Architecture
 This repository utilizes standard IAM access keys for AWS authentication in the CI/CD pipeline. 
 
-As a best practice alternative, **OpenID Connect (OIDC)** can be used to securely authenticate without managing long-lived credentials. The exact infrastructure commands and IAM trust policies required to provision OIDC are preserved in `task-1/iam/github-oidc-trust-policy.json` for reference.
+As a best practice alternative, **OpenID Connect (OIDC)** can be used to securely authenticate without managing long-lived credentials. The exact infrastructure commands and IAM trust policies required to provision OIDC are preserved in `ci-cd/iam/github-oidc-trust-policy.json` for reference.
 
 ---
 

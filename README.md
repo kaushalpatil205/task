@@ -2,7 +2,7 @@
 
 This repository contains production-ready implementations, configuration scripts, manifests, and documentation for three core DevOps infrastructure tasks:
 
-1. **Task 1**: Automated CI/CD Pipeline (GitHub Actions → Docker → Amazon ECR → Amazon EKS)
+1. **CI/CD**: Automated CI/CD Pipeline (GitHub Actions → Docker → Amazon ECR → Amazon EKS)
 2. **Task 2**: Secure Static Website Delivery (Amazon CloudFront + S3 with Origin Access Control)
 3. **Task 3**: High-Availability & Self-Healing Web Cluster (ASG + ALB with Dynamic CPU Auto Scaling)
 
@@ -14,7 +14,7 @@ Each task is self-contained within its own directory, containing all associated 
 
 | Task | Primary Objective | Code / Manifests Path | Detailed Guide | Proof of Submission |
 |---|---|---|---|---|
-| **Task 1: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`task-1/`](task-1/) | [`task-1/README.md`](task-1/README.md) | [`task-1/screenshots/`](task-1/screenshots/) |
+| **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`ci-cd/`](ci-cd/) | [`ci-cd/README.md`](ci-cd/README.md) | [`ci-cd/screenshots/`](ci-cd/screenshots/) |
 | **Task 2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`task-2/`](task-2/) | [`task-2/README.md`](task-2/README.md) | [`task-2/screenshots/`](task-2/screenshots/) |
 | **Task 3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`task-3/`](task-3/) | [`task-3/README.md`](task-3/README.md) | [`task-3/screenshots/`](task-3/screenshots/) |
 
@@ -26,10 +26,10 @@ Each task is self-contained within its own directory, containing all associated 
 task/
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml             # Global GitHub Actions workflow for Task 1
+│       └── ci-cd.yml             # Global GitHub Actions workflow for CI/CD
 │
-├── task-1/                       # Task 1: CI/CD Pipeline
-│   ├── README.md                 # In-depth Task 1 guide with architecture & embedded proofs
+├── ci-cd/                       # CI/CD: CI/CD Pipeline
+│   ├── README.md                 # In-depth CI/CD guide with architecture & embedded proofs
 │   ├── app/                      # Node.js product REST microservice
 │   │   ├── Dockerfile            # Production multi-stage Alpine Dockerfile
 │   │   ├── package.json          # Dependencies & test runners
@@ -38,7 +38,7 @@ task/
 │   ├── k8s/                      # Kubernetes deployment & service manifests
 │   │   ├── deployment.yaml
 │   │   └── service.yaml
-│   └── screenshots/              # Task 1 proof captures (cicd-01 to cicd-06)
+│   └── screenshots/              # CI/CD proof captures (cicd-01 to cicd-06)
 │
 ├── task-2/                       # Task 2: CloudFront + S3 Static Website
 │   ├── README.md                 # In-depth Task 2 guide with architecture & embedded proofs
@@ -65,14 +65,14 @@ task/
 
 ## Tasks Summary
 
-### [Task 1: CI/CD Pipeline](task-1/README.md)
+### [CI/CD: CI/CD Pipeline](ci-cd/README.md)
 - **Goal**: Implement a non-breaking delivery pipeline triggered on Git pushes.
 - **Workflow Steps**:
   1. **Run Tests**: Installs dependencies and runs Jest unit tests covering positive and negative API paths.
   2. **Build & Push**: Logs into Amazon ECR via IAM credentials, builds an Alpine-based Docker container, tags it with the immutable Git commit SHA and `latest`, and pushes both tags.
   3. **Deploy to K8s**: Authenticates with Amazon EKS, substitutes the dynamic image tag into Kubernetes manifests, applies Deployment and LoadBalancer Service configurations, and verifies rollout completion.
 - **Microservice**: Node.js Express Product API exposing `/health` for Kubernetes probes and `/products` for CRUD operations.
-- **Full Guide**: Refer to [`task-1/README.md`](task-1/README.md).
+- **Full Guide**: Refer to [`ci-cd/README.md`](ci-cd/README.md).
 
 ---
 
@@ -104,7 +104,7 @@ task/
 
 For submission, each task folder contains an isolated `screenshots/` directory. Capture each proof and place the file in the matching path below:
 
-### Task 1 Screenshots ([`task-1/screenshots/`](task-1/screenshots/))
+### CI/CD Screenshots ([`ci-cd/screenshots/`](ci-cd/screenshots/))
 - `cicd-01-repo-secrets.png`: GitHub repository Secrets configuration with OIDC (`AWS_ROLE_ARN`, `EKS_CLUSTER_NAME`).
 - `cicd-02-pipeline-running.png`: GitHub Actions tab showing triggered pipeline execution.
 - `cicd-03-tests-passed.png`: Expanded "Run Tests" job output showing all unit tests green.
@@ -159,13 +159,13 @@ As an alternative, **OpenID Connect (OIDC)** can be used to securely assume an I
   }
 }
 ```
-*The infrastructure code and IAM configurations for this exact OIDC implementation are preserved in the `task-1/iam/` directory for review.*
+*The infrastructure code and IAM configurations for this exact OIDC implementation are preserved in the `ci-cd/iam/` directory for review.*
 
-## 🏗️ Task 1 Overview: Node.js Microservice
+## 🏗️ CI/CD Overview: Node.js Microservice
 
-The application deployed in Task 1 is a Node.js/Express backend REST API. It acts as a headless data provider, exposing a `GET /api/products` JSON endpoint. 
+The application deployed in CI/CD is a Node.js/Express backend REST API. It acts as a headless data provider, exposing a `GET /api/products` JSON endpoint. 
 
-The `task-1/` directory is structured as follows:
+The `ci-cd/` directory is structured as follows:
 *   `app/`: Contains the Node.js API code, Jest unit tests, and the multi-stage `Dockerfile`.
 *   `k8s/`: Contains the Kubernetes manifests (`deployment.yaml` and `service.yaml`) used to provision the pods and AWS LoadBalancer.
 *   `iam/`: Contains the security policies, specifically the OIDC Federation Trust Policy.
