@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 permissions:
-  id-token: write   # Required for requesting the JWT for AWS OIDC authentication
-  contents: read    # Required for actions/checkout
+  id-token: write
+  contents: read
 
 env:
   AWS_REGION: ap-south-1
@@ -30,21 +30,21 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: app/package.json
+          cache-dependency-path: task-1/app/package.json
 
       - name: Install dependencies
-        working-directory: app
+        working-directory: task-1/app
         run: npm install
 
       - name: Run tests
-        working-directory: app
+        working-directory: task-1/app
         run: npm test
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: app/coverage/
+          path: task-1/app/coverage/
 
   build-and-push:
     name: Build and Push to ECR
@@ -66,7 +66,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker image
-        working-directory: app
+        working-directory: task-1/app
         run: |
           docker build -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} .
 
@@ -112,9 +112,9 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           sed -i "s|IMAGE_TAG|${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}|g" \
-            k8s/deployment.yaml
-          kubectl apply -f k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
+            task-1/k8s/deployment.yaml
+          kubectl apply -f task-1/k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f task-1/k8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
 
       - name: Wait for rollout
         run: kubectl rollout status deployment/product-api -n ${{ env.K8S_NAMESPACE }} --timeout=120s
