@@ -63,13 +63,17 @@ aws autoscaling put-scaling-policy   --auto-scaling-group-name product-api-asg-1
 The ALB successfully routing traffic to the EC2 instances across different AZs.
 ![ALB Traffic](screenshots/asg-01-alb-traffic.png)
 
-### 2. CPU Auto Scaling Policy
-The Target Tracking scaling policy configured to trigger when CPU > 70%.
-![Scaling Policy](screenshots/asg-02-scaling-policy.png)
+### 2. Application Load Balancer Provisioned
+The ALB actively listening across the Availability Zones and routing to the target group.
+![Load Balancer Console](screenshots/asg-02-load-balancer.png)
 
-### 3. Unhealthy Instance Replacement (Self-Healing)
+### 3. CPU Auto Scaling Policy
+The Target Tracking scaling policy configured to trigger when CPU > 70%.
+![Scaling Policy](screenshots/asg-03-scaling-policy.png)
+
+### 4. Unhealthy Instance Replacement (Self-Healing)
 Proof of the ASG automatically detecting a terminated instance and successfully launching a replacement.
-![Auto Replacement](screenshots/asg-03-auto-replacement.png)
+![Auto Replacement](screenshots/asg-04-auto-replacement.png)
 
 ---
 
