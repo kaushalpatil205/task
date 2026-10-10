@@ -2,9 +2,9 @@
 
 This repository contains production-ready implementations, configuration scripts, manifests, and documentation for three core DevOps infrastructure tasks:
 
-1. **CI/CD**: Automated CI/CD Pipeline (GitHub Actions → Docker → Amazon ECR → Amazon EKS)
-2. **Task 2**: Secure Static Website Delivery (Amazon CloudFront + S3 with Origin Access Control)
-3. **Task 3**: High-Availability & Self-Healing Web Cluster (ASG + ALB with Dynamic CPU Auto Scaling)
+1. **Task-1: CI/CD**: Automated CI/CD Pipeline (GitHub Actions → Docker → Amazon ECR → Amazon EKS)
+2. **Task-2: CloudFront**: Secure Static Website Delivery (Amazon CloudFront + S3 with Origin Access Control)
+3. **Task-3: ASG + ALB**: High-Availability & Self-Healing Web Cluster (ASG + ALB with Dynamic CPU Auto Scaling)
 
 ---
 
@@ -65,7 +65,7 @@ task/
 
 ## Tasks Summary
 
-### [CI/CD: CI/CD Pipeline](ci-cd/README.md)
+### [Task-1: CI/CD](ci-cd/README.md)
 - **Goal**: Implement a non-breaking delivery pipeline triggered on Git pushes.
 - **Workflow Steps**:
   1. **Run Tests**: Installs dependencies and runs Jest unit tests covering positive and negative API paths.
@@ -76,7 +76,7 @@ task/
 
 ---
 
-### [Task-2: CloudFront + S3 Static Website](cloudfront/README.md)
+### [Task-2: CloudFront](cloudfront/README.md)
 - **Goal**: Host a static web portal on Amazon S3 with global CDN caching and strict access control.
 - **Security & Delivery Highlights**:
   1. **S3 Hardening**: All 4 Block Public Access toggles are permanently enabled.
@@ -88,7 +88,7 @@ task/
 
 ---
 
-### [Task-3: ASG + ALB with Dynamic CPU Scaling](asg-alb/README.md)
+### [Task-3: ASG + ALB](asg-alb/README.md)
 - **Goal**: Provision a highly-available, self-healing web server fleet across multiple Availability Zones.
 - **Architecture Highlights**:
   1. **Security Isolation**: Internet traffic only enters the Application Load Balancer (ALB SG); EC2 web servers only accept traffic from the ALB SG.
