@@ -106,3 +106,35 @@ Attempting to hit the S3 bucket URL directly yields an `AccessDenied` error, val
 ### 7. Cache Invalidation
 The completed `/*` cache invalidation request.
 ![Cache Invalidation](screenshots/cf-07-cache-invalidation.png)
+
+## 🧹 Environment Cleanup
+
+To prevent unnecessary AWS charges after validating the deployment, follow these steps to destroy the Task 2 infrastructure.
+
+### 1. Delete the S3 Bucket
+Since the bucket contains objects (`index.html`, `error.html`), use the `--force` flag to automatically empty and delete it in one command:
+```bash
+aws s3 rb s3://production-portal-1791636022 --force
+```
+
+### 2. Disable and Delete CloudFront
+*Note: A CloudFront distribution MUST be disabled before it can be deleted.*
+*   **Easiest Method (AWS Console):** Go to the CloudFront Dashboard, select the distribution (`EX7SB7FVLSN12`), and click **Disable**. Wait approximately 3 minutes for it to finish deploying, and then click **Delete**.
+*   **CLI Method:**
+    ```bash
+    # 1. Get the ETag (required for updates)
+    ETAG=$(aws cloudfront get-distribution-config --id EX7SB7FVLSN12 --query 'ETag' --output text)
+    
+    # 2. Extract config, change "Enabled": true to false, and update
+    aws cloudfront get-distribution-config --id EX7SB7FVLSN12 --query 'DistributionConfig' --output json | sed 's/"Enabled": true/"Enabled": false/' > disabled-config.json
+    aws cloudfront update-distribution --id EX7SB7FVLSN12 --if-match $ETAG --distribution-config file://disabled-config.json
+    
+    # 3. Wait 3 minutes, fetch the NEW ETag, and delete
+    NEW_ETAG=$(aws cloudfront get-distribution-config --id EX7SB7FVLSN12 --query 'ETag' --output text)
+    aws cloudfront delete-distribution --id EX7SB7FVLSN12 --if-match $NEW_ETAG
+    ```
+
+### 3. Delete the Origin Access Control (OAC)
+```bash
+aws cloudfront delete-origin-access-control --id E1M1DW696YS0S6
+```
