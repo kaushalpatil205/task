@@ -235,3 +235,8 @@ Terminal output verifying that the 2 replicas are running with healthy probes un
 Pipeline deployment step confirming `deployment/product-api successfully rolled out`.
 ![Rollout Completed](screenshots/cicd-06-rollout-done.png)
 *File: `screenshots/cicd-06-rollout-done.png`*
+
+### 🔐 Note on Authentication (OIDC vs IAM Keys)
+Because the AWS environment provided for this task operates under strict AWS SSO Organization Service Control Policies (SCPs) that block `sts:AssumeRoleWithWebIdentity`, the CI/CD pipeline currently utilizes IAM Access Keys as a required fallback. 
+
+For a production deployment lacking these specific SCP blocks, the pipeline is engineered to utilize **OpenID Connect (OIDC)**. The required OIDC Trust Policies and setup documentation have been fully implemented and are located in `iam/github-oidc-trust-policy.json` to demonstrate the preferred, credential-less architectural standard.
