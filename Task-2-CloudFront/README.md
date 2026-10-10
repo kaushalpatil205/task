@@ -9,6 +9,33 @@ This task demonstrates a highly secure, serverless presentation tier. We hosted 
 * **Custom Error Routing:** Any 403 (Forbidden) or 404 (Not Found) errors returned by S3 are seamlessly caught by CloudFront and routed to a custom `/error.html` page.
 * **Edge Caching & Invalidation:** Content is cached at edge locations globally to reduce latency, and automated invalidation commands are utilized to flush stale caches when new deployments occur.
 
+## 📂 Project File Structure
+This module is organized to separate automation logic, security policies, and the static website assets:
+
+```text
+Task-2-CloudFront/
+├── scripts/
+│   └── cloudfront-setup.sh    # Core bash automation script provisioning S3, OAC, and CloudFront
+├── static/
+│   ├── index.html             # The main static UI portal
+│   └── error.html             # Custom 404/403 error page routed by CloudFront
+├── policy/
+│   └── s3-oac-policy.json     # Reference S3 Bucket policy enforcing Origin Access Control
+├── screenshots/               # Proof of execution captures
+└── README.md                  # Task documentation
+```
+
+## 🤖 Automation via Bash Script
+To ensure repeatable and error-free infrastructure provisioning, the entire deployment was codified into a single bash script: `scripts/cloudfront-setup.sh`. 
+
+When executed, this script autonomously:
+1. Dynamically fetches the active AWS Account ID to build strict security policies.
+2. Creates the private S3 bucket and permanently blocks all public access.
+3. Uploads the HTML files from the `static/` directory.
+4. Generates an Origin Access Control (OAC) signature.
+5. Deploys the global CloudFront Distribution with custom error routing.
+6. Attaches the strict bucket policy to S3 to allow read access *only* from the CloudFront Distribution.
+
 ## 🚀 Execution Guide & Commands Log
 
 This entire infrastructure was provisioned autonomously using our `scripts/cloudfront-setup.sh` bash script. Below are the core AWS CLI commands that were executed under the hood:
