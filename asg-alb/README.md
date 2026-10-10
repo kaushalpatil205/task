@@ -1,4 +1,4 @@
-# Task 3: High-Availability Web Cluster (ASG + ALB + CPU Auto Scaling)
+# Task-3: High-Availability Web Cluster (ASG + ALB + CPU Auto Scaling)
 
 ## Overview
 This task implements a fault-tolerant, scalable web architecture on AWS using an **Application Load Balancer (ALB)** and an **Auto Scaling Group (ASG)** spanning multiple Availability Zones. The cluster features:

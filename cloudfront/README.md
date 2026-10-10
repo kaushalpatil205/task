@@ -1,4 +1,4 @@
-# Task 2: Secure Static Website Hosting via CloudFront & S3 (OAC Restricted)
+# Task-2: Secure Static Website Hosting via CloudFront & S3 (OAC Restricted)
 
 ## Overview
 This task demonstrates configuring a secure, high-performance static website distribution using Amazon CloudFront and Amazon S3. Direct public access to the S3 bucket is strictly blocked. Access is restricted exclusively to CloudFront edge locations using modern **Origin Access Control (OAC)** with AWS SigV4 request signing. In addition, automated cache invalidation is implemented to push content updates to edge locations without cache latency.

@@ -15,8 +15,8 @@ Each task is self-contained within its own directory, containing all associated 
 | Task | Primary Objective | Code / Manifests Path | Detailed Guide | Proof of Submission |
 |---|---|---|---|---|
 | **CI/CD: CI/CD** | Automated testing, Docker packaging, ECR registry push & EKS Kubernetes deployment | [`ci-cd/`](ci-cd/) | [`ci-cd/README.md`](ci-cd/README.md) | [`ci-cd/screenshots/`](ci-cd/screenshots/) |
-| **Task 2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`cloudfront/`](cloudfront/) | [`cloudfront/README.md`](cloudfront/README.md) | [`cloudfront/screenshots/`](cloudfront/screenshots/) |
-| **Task 3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`asg-alb/`](asg-alb/) | [`asg-alb/README.md`](asg-alb/README.md) | [`asg-alb/screenshots/`](asg-alb/screenshots/) |
+| **Task-2: CloudFront** | S3 private static hosting, CloudFront CDN edge delivery, OAC security lock & cache invalidation | [`cloudfront/`](cloudfront/) | [`cloudfront/README.md`](cloudfront/README.md) | [`cloudfront/screenshots/`](cloudfront/screenshots/) |
+| **Task-3: ASG + ALB** | Multi-AZ Application Load Balancer, Launch Template, ASG CPU >70% scaling & automatic instance replacement | [`asg-alb/`](asg-alb/) | [`asg-alb/README.md`](asg-alb/README.md) | [`asg-alb/screenshots/`](asg-alb/screenshots/) |
 
 ---
 
@@ -40,7 +40,7 @@ task/
 │   │   └── service.yaml
 │   └── screenshots/              # CI/CD proof captures (cicd-01 to cicd-06)
 │
-├── cloudfront/                       # Task 2: CloudFront + S3 Static Website
+├── cloudfront/                       # Task-2: CloudFront + S3 Static Website
 │   ├── README.md                 # In-depth Task 2 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   └── cloudfront-setup.sh   # Bash automation script (S3, OAC, Distribution, Policy)
@@ -49,7 +49,7 @@ task/
 │   │   └── s3-oac-policy.json    # Bucket policy enforcing CloudFront OAC access
 │   └── screenshots/              # Task 2 proof captures (cf-01 to cf-07)
 │
-├── asg-alb/                       # Task 3: ASG + ALB + Auto Scaling
+├── asg-alb/                       # Task-3: ASG + ALB + Auto Scaling
 │   ├── README.md                 # In-depth Task 3 guide with architecture & embedded proofs
 │   ├── scripts/
 │   │   ├── asg-alb-setup.sh      # Bash automation script (VPC, ALB, TG, ASG, Policy)
@@ -76,7 +76,7 @@ task/
 
 ---
 
-### [Task 2: CloudFront + S3 Static Website](cloudfront/README.md)
+### [Task-2: CloudFront + S3 Static Website](cloudfront/README.md)
 - **Goal**: Host a static web portal on Amazon S3 with global CDN caching and strict access control.
 - **Security & Delivery Highlights**:
   1. **S3 Hardening**: All 4 Block Public Access toggles are permanently enabled.
@@ -88,7 +88,7 @@ task/
 
 ---
 
-### [Task 3: ASG + ALB with Dynamic CPU Scaling](asg-alb/README.md)
+### [Task-3: ASG + ALB with Dynamic CPU Scaling](asg-alb/README.md)
 - **Goal**: Provision a highly-available, self-healing web server fleet across multiple Availability Zones.
 - **Architecture Highlights**:
   1. **Security Isolation**: Internet traffic only enters the Application Load Balancer (ALB SG); EC2 web servers only accept traffic from the ALB SG.
