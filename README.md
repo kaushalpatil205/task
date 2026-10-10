@@ -105,7 +105,7 @@ task/
 For submission, each task folder contains an isolated `screenshots/` directory. Capture each proof and place the file in the matching path below:
 
 ### Task 1 Screenshots ([`task-1/screenshots/`](task-1/screenshots/))
-- `cicd-01-repo-secrets.png`: GitHub repository Secrets configuration (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `EKS_CLUSTER_NAME`).
+- `cicd-01-repo-secrets.png`: GitHub repository Secrets configuration with OIDC (`AWS_ROLE_ARN`, `EKS_CLUSTER_NAME`).
 - `cicd-02-pipeline-running.png`: GitHub Actions tab showing triggered pipeline execution.
 - `cicd-03-tests-passed.png`: Expanded "Run Tests" job output showing all unit tests green.
 - `cicd-04-ecr-image.png`: AWS ECR console showing the uploaded image tagged with Git SHA.

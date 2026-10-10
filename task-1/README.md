@@ -1,29 +1,31 @@
-# Task 1: Automated CI/CD Pipeline (GitHub Actions → ECR → Kubernetes)
+# Task 1: Automated CI/CD Pipeline (GitHub Actions → ECR → Kubernetes via OIDC)
 
 ## Overview
 This task implements an automated continuous integration and continuous deployment (CI/CD) pipeline for a containerized Node.js REST API microservice. Every code push to the `main` branch triggers automated testing, container image packaging, vulnerability-conscious artifact publishing to Amazon Elastic Container Registry (ECR), and rolling deployment to an Amazon Elastic Kubernetes Service (EKS) cluster.
+
+### Key Security Feature: Zero Long-Lived Credentials (AWS OIDC)
+Instead of storing permanent AWS Access Keys in GitHub Secrets, this pipeline implements **OpenID Connect (OIDC)** authentication with AWS Security Token Service (STS). GitHub Actions exchanges an ephemeral JSON Web Token (JWT) directly with AWS IAM via `AssumeRoleWithWebIdentity` to obtain short-lived, automatically expiring credentials.
 
 ---
 
 ## Architecture Diagram
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph Local_Dev [Developer Workspace]
         DEV([Git Commit & Push])
     end
 
-    subgraph GitHub [GitHub Repository]
+    subgraph GitHub_Platform [GitHub Environment]
         GHA[GitHub Actions Runner]
-        SECRETS[(GitHub Secrets)]
+        OIDC_TOKEN[GitHub OIDC Token Provider\ntoken.actions.githubusercontent.com]
+        SECRETS[(GitHub Secrets:\n- AWS_ROLE_ARN\n- EKS_CLUSTER_NAME)]
     end
 
-    subgraph Pipeline [CI/CD Workflow Jobs]
-        direction TB
-        J1[Job 1: Test\n- npm install\n- Jest unit tests\n- code coverage report]
-        J2[Job 2: Build & Push\n- Authenticate via IAM\n- Docker build with Git SHA\n- Push to ECR]
-        J3[Job 3: Deploy\n- Connect to EKS cluster\n- Substitute image tag\n- kubectl apply manifests\n- Verify rollout status]
-        J1 -->|Success| J2 -->|Success| J3
+    subgraph AWS_IAM [AWS Identity & Access Management]
+        IDP[IAM Identity Provider\nGitHub OIDC]
+        ROLE[IAM Role: github-actions-eks-deployer\nTrust Condition: repo:kaushalpatil205/task:*]
+        STS[AWS STS Token Service\nAssumeRoleWithWebIdentity]
     end
 
     subgraph AWS_Cloud [AWS Infrastructure - ap-south-1]
@@ -33,11 +35,16 @@ flowchart LR
         PODS[App Pods\nReplica Count: 2\nProbes: /health]
     end
 
-    DEV -->|git push origin main| GHA
+    DEV -->|1. Push to main| GHA
     SECRETS -.-> GHA
-    GHA --> Pipeline
-    J2 -->|docker push| ECR
-    J3 -->|pull & deploy| EKS_CLUSTER
+    GHA -->|2. Request OIDC JWT| OIDC_TOKEN
+    OIDC_TOKEN -->|3. Ephemeral JWT| GHA
+    GHA -->|4. AssumeRoleWithWebIdentity| STS
+    STS -->|5. Verify Trust Policy against OIDC| IDP
+    IDP -->|6. Validated| ROLE
+    ROLE -->|7. Short-lived Temp Credentials| GHA
+    GHA -->|8. docker push| ECR
+    GHA -->|9. kubectl apply| EKS_CLUSTER
     EKS_CLUSTER --> SVC --> PODS
     PODS -.->|pull image| ECR
 ```
@@ -57,9 +64,11 @@ task-1/
 │   ├── .dockerignore            # Excludes node_modules, tests, logs
 │   ├── .gitignore
 │   └── package.json             # App dependencies & test scripts
+├── iam/
+│   └── github-oidc-trust-policy.json # AWS IAM Trust Policy template for OIDC
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml            # 3-stage GitHub Actions pipeline
+│       └── ci-cd.yml            # 3-stage GitHub Actions pipeline (OIDC-enabled)
 ├── k8s/
 │   ├── deployment.yaml          # K8s Deployment (replicas: 2, probes, limits)
 │   └── service.yaml             # K8s Service (LoadBalancer routing to port 3000)
@@ -90,16 +99,55 @@ The microservice is a production-style Node.js/Express inventory API (`app/`):
 
 ## Implementation Steps
 
-### 1. Local Testing & Verification
-Verify that tests pass and coverage artifacts are generated before configuring the pipeline:
+### 1. Configure AWS OIDC Identity Provider & IAM Role
 
+#### A. Add GitHub OIDC Identity Provider
+In AWS Console → **IAM** → **Identity providers** → **Add provider**:
+- Provider type: **OpenID Connect**
+- Provider URL: `https://token.actions.githubusercontent.com`
+- Audience: `sts.amazonaws.com`
+
+*(Or via AWS CLI)*:
 ```bash
-cd task-1/app
-npm install
-npm test
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --client-id-list sts.amazonaws.com \
+  --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 1c5824a6f504e154699648a3fe4a81ec3230b428
 ```
 
-### 2. AWS Pre-requisites
+#### B. Create IAM Role with Trust Policy
+Create an IAM Role (e.g. `github-actions-eks-deployer`) using the trust policy in `task-1/iam/github-oidc-trust-policy.json`:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::<YOUR_ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:kaushalpatil205/task:*"
+        }
+      }
+    }
+  ]
+}
+```
+
+Attach permissions to this role:
+- `AmazonEC2ContainerRegistryPowerUser` (for pushing Docker images to ECR)
+- An inline policy or cluster role mapping to access EKS (`eks:DescribeCluster`, etc.)
+
+---
+
+### 2. AWS Pre-requisites (ECR & EKS)
 1. **ECR Repository**:
    ```bash
    aws ecr create-repository --repository-name product-api --region ap-south-1
@@ -110,20 +158,27 @@ npm test
    kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
    ```
 
+---
+
 ### 3. GitHub Secrets Configuration
 In the GitHub repository, navigate to **Settings** → **Secrets and variables** → **Actions** and add:
-- `AWS_ACCESS_KEY_ID`: IAM user access key with ECR and EKS deployment permissions.
-- `AWS_SECRET_ACCESS_KEY`: IAM user secret key.
+- `AWS_ROLE_ARN`: The ARN of your newly created IAM role (e.g., `arn:aws:iam::<ACCOUNT_ID>:role/github-actions-eks-deployer`).
 - `EKS_CLUSTER_NAME`: Name of your active Amazon EKS cluster.
+
+> Notice: No long-lived access keys (`AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY`) are required!
+
+---
 
 ### 4. Triggering the CI/CD Pipeline
 Commit changes and push to `main`:
 
 ```bash
-git add task-1/
-git commit -m "ci: configure automated pipeline for product-api"
+git add .
+git commit -m "ci: configure automated OIDC pipeline for product-api"
 git push origin main
 ```
+
+---
 
 ### 5. Verification Commands
 Confirm the live deployment on your cluster:
@@ -141,8 +196,8 @@ kubectl rollout status deployment/product-api -n production
 
 All execution proofs are preserved in the [`screenshots/`](screenshots/) directory.
 
-### 1. GitHub Repository Secrets
-Demonstrates the secure injection of AWS access credentials and cluster configuration into GitHub Actions.
+### 1. GitHub Repository Secrets (OIDC Configured)
+Demonstrates the secure configuration using `AWS_ROLE_ARN` and `EKS_CLUSTER_NAME` without exposing static credentials.
 ![GitHub Secrets](screenshots/cicd-01-repo-secrets.png)
 *File: `screenshots/cicd-01-repo-secrets.png`*
 
